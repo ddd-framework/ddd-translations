@@ -12,7 +12,7 @@ use DDD\Domain\Common\Entities\Texts\DetectedLanguage;
 use DDD\Domain\Common\Entities\Texts\Translations\Translation;
 
 /**
- * translates text with deepl, https://swagger.rankingcoach.com/?urls.primaryName=rc-translations%20%5Bmicroservice%20prometheus%20swagger%5D#/translation/post_deepl_translate
+ * translates text with deepl (through a translation microservice)
  * https://www.deepl.com/en/docs-api/
  */
 #[ArgusLoad(loadEndpoint: 'POST:/rc-translations/deepl/translate', cacheLevel: ArgusCache::CACHELEVEL_MEMORY_AND_DB, cacheTtl: ArgusCache::CACHE_TTL_ONE_DAY)]
