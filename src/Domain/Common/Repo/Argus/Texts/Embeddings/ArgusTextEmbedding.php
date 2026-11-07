@@ -56,15 +56,27 @@ class ArgusTextEmbedding extends TextEmbedding
         return $this->toEntity();
     }
 
+    /**
+     * Only an answer carrying a vector is a successful load. A non-2xx answer or a rejected call is not cached at all
+     * (the next load asks again); any other answer without a vector is cached as empty for at most
+     * ArgusCache::FAILED_LOAD_CACHE_TTL_MAX.
+     */
     public function handleLoadResponse(mixed &$callResponseData = null, ?ArgusApiOperation &$apiOperation = null): void
     {
-        if (isset($callResponseData->status) && ($callResponseData->status == 200 || $callResponseData->status == 'OK') && isset($callResponseData->data->data[0])) {
-            $responseObject = $callResponseData->data->data[0];
-            if (isset($responseObject->embedding) && is_array($responseObject->embedding)) {
-                $this->vectorValues = $responseObject->embedding;
-            }
+        $rejectionReason = $callResponseData === null
+            ? ($apiOperation?->rejectionReason ?? 'no answer')
+            : static::rejectionReasonForNon2xxAnswer($callResponseData, $apiOperation);
+        if ($rejectionReason === null
+            && isset($callResponseData->status)
+            && ($callResponseData->status == 200 || $callResponseData->status == 'OK')
+            && isset($callResponseData->data->data[0]->embedding)
+            && is_array($callResponseData->data->data[0]->embedding)
+        ) {
+            $this->vectorValues = $callResponseData->data->data[0]->embedding;
+            $this->postProcessLoadResponse($callResponseData);
+            return;
         }
-        $this->postProcessLoadResponse($callResponseData);
+        $this->postProcessLoadResponse($callResponseData, false, cacheFailure: $rejectionReason === null);
     }
 
     /**
