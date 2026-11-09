@@ -1,6 +1,6 @@
 # mgamadeus/ddd-common-translations
 
-Texts, entity translations, app UI translations, embeddings, and language detection for the [mgamadeus/ddd](https://github.com/mgamadeus/ddd) framework.
+Texts, entity translations, app UI translations, embeddings, and language detection for the [mgamadeus/ddd](https://github.com/ddd-framework/ddd) framework.
 
 ## Installation
 
@@ -8,7 +8,7 @@ Texts, entity translations, app UI translations, embeddings, and language detect
 composer require mgamadeus/ddd-common-translations
 ```
 
-This pulls in [ddd-ai](https://github.com/mgamadeus/ddd-ai) and [ddd-common-political](https://github.com/mgamadeus/ddd-political) automatically.
+This pulls in [ddd-ai](https://github.com/ddd-framework/ddd-ai) and [ddd-common-political](https://github.com/ddd-framework/ddd-political) automatically.
 
 ## What it does
 
@@ -172,7 +172,7 @@ The module does not ship this file — create it in your project as needed.
 | `ArgusTextEmbedding` | `POST:/ai/openRouter/embeddings` | 1 day | Text vectorization |
 | `ArgusDetectedLanguage` | `POST:/ai/openRouter/chatCompletions` | none | Language detection |
 
-All require `ARGUS_API_ENDPOINT` to be configured (see [ddd-argus](https://github.com/mgamadeus/ddd-argus)).
+All require `ARGUS_API_ENDPOINT` to be configured (see [ddd-argus](https://github.com/ddd-framework/ddd-argus)).
 
 ## Database tables
 
