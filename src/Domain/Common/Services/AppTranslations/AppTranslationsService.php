@@ -21,6 +21,7 @@ use DDD\Domain\Common\Entities\Locales\Locale;
 use DDD\Domain\Common\Entities\Texts\Text;
 use DDD\Domain\Common\Entities\Texts\Texts;
 use DDD\Domain\Common\Entities\Texts\Translations\Translations;
+use DDD\Domain\Common\Exceptions\AppTranslationsLoadFailedException;
 use DDD\Domain\Common\MessageHandlers\AppTranslationsMessage;
 use DDD\Domain\Common\Repo\Argus\Texts\ArgusTexts;
 use DDD\Domain\Common\Repo\Argus\Texts\Translations\ArgusTranslations;
@@ -476,6 +477,7 @@ class AppTranslationsService extends Service
      * @param Texts $texts
      * @param bool $async
      * @return void
+     * @throws AppTranslationsLoadFailedException when the model call brought no translations (isTransient: retry)
      * @throws InternalErrorException
      * @throws ReflectionException
      */
@@ -497,6 +499,11 @@ class AppTranslationsService extends Service
         $translations->getArgusSettings()->toBeLoaded = true;
         ArgusLoad::$logArgusCalls = true;
         $argusTexts->argusLoad();
+        // a failed model call (transport error, 5xx, 429, no readable answer) loads no translation: say so instead of
+        // storing nothing, so that the message can be retried when the failure is transient
+        if ($loadFailureReason = $translations->getLastLoadFailureReason()) {
+            throw AppTranslationsLoadFailedException::fromLoadFailureReason($loadFailureReason);
+        }
 
         $appTranslationIds = [];
         foreach ($argusTexts->translations->getElements() as $translation) {

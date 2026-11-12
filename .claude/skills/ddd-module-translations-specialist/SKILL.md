@@ -3,7 +3,7 @@ name: ddd-module-translations-specialist
 description: "Work with entity translations, app UI translations, text embeddings, and language detection from the ddd-common-translations module. Covers the model per translation purpose (app UI vs entity translations, Common.TranslationModels config, fast mode) and the glossary of default terms. Use when translating entity properties, managing app translation keys, generating translations via AI, choosing the translation model, or working with text embeddings."
 metadata:
   author: mgamadeus
-  version: "1.1.0"
+  version: "1.1.1"
   module: mgamadeus/ddd-common-translations
 ---
 
@@ -241,7 +241,10 @@ Uses first 100 words for efficiency.
 framework:
     messenger:
         transports:
-            app_translations: '%env(MESSENGER_TRANSPORT_DSN_RABBITMQ)%/app_translations'
+            app_translations:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN_RABBITMQ)%/app_translations'
+                # transient failures are retried by this strategy; give a rollout time to finish
+                retry_strategy: { max_retries: 3, delay: 30000, multiplier: 2 }
         routing:
             'DDD\Domain\Common\MessageHandlers\AppTranslationsMessage': app_translations
 ```
@@ -251,6 +254,12 @@ framework:
 $texts->translate(async: true);
 // Dispatches AppTranslationsMessage -> AppTranslationsHandler
 ```
+
+A batch whose model call brings no translations throws `AppTranslationsLoadFailedException` instead of storing
+nothing. The handler retries a TRANSIENT failure (no connection, timeout, cURL 6/7/28/35/52/55/56, HTTP
+408/425/429/5xx — nothing was translated or billed) through the transport's `retry_strategy` (Messenger default: 3
+retries, 1 s doubling; set a longer delay as above). Every other failure (an unreadable model answer, a 4xx) is
+unrecoverable and goes to the failure transport: a retry could bill the same texts again.
 
 ## Prompt Templates
 
