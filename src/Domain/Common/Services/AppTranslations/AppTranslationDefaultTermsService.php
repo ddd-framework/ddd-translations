@@ -11,8 +11,10 @@ use DDD\Domain\Common\Entities\Languages\Languages;
 use DDD\Domain\Common\Repo\DB\AppTranslations\DBAppTranslationDefaultTerm;
 use DDD\Domain\Common\Repo\DB\AppTranslations\DBAppTranslationDefaultTerms;
 use DDD\Domain\Base\Entities\DefaultObject;
+use DDD\Domain\Base\Entities\QueryOptions\AppliedQueryOptions;
 use DDD\Domain\Base\Services\EntitiesService;
 use DDD\Domain\Common\Services\Languages\LanguagesService;
+use ReflectionException;
 
 /**
  * Service for managing AppTranslationDefaultTerm entities
@@ -39,10 +41,14 @@ class AppTranslationDefaultTermsService extends EntitiesService
     }
 
     /**
-     * Find default terms for a given language ID
+     * Finds EVERY default term of a language, ordered by id, each variant linked to its default term.
+     *
+     * The glossary needs the whole list, so the read ignores the set's default query options: no default top
+     * (50), no filters, ordering or paging a request set for AppTranslationDefaultTerms.
      *
      * @param int $languageId The language ID to find default terms for
      * @return AppTranslationDefaultTerms|null
+     * @throws ReflectionException
      */
     public function findDefaultTermsForLanguageId(int $languageId): ?AppTranslationDefaultTerms
     {
@@ -52,8 +58,17 @@ class AppTranslationDefaultTermsService extends EntitiesService
 
         $queryBuilder->andWhere("$baseModelAlias.languageId = :languageId");
         $queryBuilder->setParameter('languageId', $languageId);
+        $queryBuilder->orderBy("$baseModelAlias.id", 'ASC');
 
-        return $repoClass->find($queryBuilder);
+        AppTranslationDefaultTerms::setDefaultQueryOptionsSnapshot();
+        try {
+            AppTranslationDefaultTerms::setDefaultQueryOptions(new AppliedQueryOptions());
+            $defaultTerms = $repoClass->find($queryBuilder);
+        } finally {
+            AppTranslationDefaultTerms::restoreDefaultQueryOptionsSnapshot();
+        }
+
+        return $defaultTerms?->linkVariantTermsToDefaultTerms();
     }
 
     /**

@@ -3,7 +3,7 @@ name: ddd-module-translations-specialist
 description: Work with entity translations, app UI translations, text embeddings, and language detection from the ddd-common-translations module. Use when translating entity properties, managing app translation keys, generating translations via AI, or working with text embeddings.
 metadata:
   author: mgamadeus
-  version: "1.0.0"
+  version: "1.0.1"
   module: mgamadeus/ddd-common-translations
 ---
 
@@ -249,4 +249,11 @@ echo $terms->getDefaultTermsAsStringPairs();
 // "Einstellungen;Settings\nAbmelden;Logout\n"
 ```
 
-These are injected into translation prompts for consistency.
+These are injected into translation prompts for consistency (the `{%glossary%}` parameter of the app translation
+prompts, built by `getDefaultTermsAsAssociationPairs()` as `<variant>, <variant> => <default term>` lines).
+
+- `findDefaultTermsForLanguageId()` / `…ForLanguage()` / `…ForLanguageCode()` return EVERY term of the language,
+  ordered by id: the read ignores the set's default query options (no default top 50, no request filters).
+- A variant row points to its default term through `defaultTermId`; `defaultTerm` is no lazy load. The finders, and
+  both pair methods, link each variant to its default term from the same set (`linkVariantTermsToDefaultTerms()`).
+  A variant whose default term is not in the set gives no glossary line.

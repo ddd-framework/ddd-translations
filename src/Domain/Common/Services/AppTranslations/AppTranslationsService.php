@@ -25,7 +25,6 @@ use DDD\Domain\Common\Entities\Texts\Translations\Translations;
 use DDD\Domain\Common\MessageHandlers\AppTranslationsMessage;
 use DDD\Domain\Common\Repo\Argus\Texts\ArgusTexts;
 use DDD\Domain\Common\Repo\Argus\Texts\Translations\ArgusTranslations;
-use DDD\Domain\Common\Repo\DB\AppTranslations\DBAppTranslationDefaultTerms;
 use DDD\Domain\Common\Services\Languages\LanguagesService;
 use DDD\Domain\Common\Services\Languages\LocalesService;
 use DDD\Infrastructure\Exceptions\BadRequestException;
@@ -88,20 +87,19 @@ class AppTranslationsService extends Service
     }
 
     /**
-     * Returns default translation terms for a given language ID
+     * Returns every default translation term of a language, each variant linked to its default term
+     * (see {@see AppTranslationDefaultTermsService::findDefaultTermsForLanguageId()}).
      *
      * @param int $languageId
      * @return AppTranslationDefaultTerms
+     * @throws ReflectionException
      */
     public function findDefaultTermsForLanguageId(int $languageId): AppTranslationDefaultTerms
     {
-        $dbAppTranslationDefaultTerms = new DBAppTranslationDefaultTerms();
-        $queryBuilder = $dbAppTranslationDefaultTerms::createQueryBuilder();
-        $baseModelAlias = $dbAppTranslationDefaultTerms::getBaseModelAlias();
-        $queryBuilder->andWhere("$baseModelAlias.languageId = :languageId");
-        $queryBuilder->setParameter('languageId', $languageId);
-
-        return $dbAppTranslationDefaultTerms->find($queryBuilder) ?? new AppTranslationDefaultTerms();
+        /** @var AppTranslationDefaultTermsService $appTranslationDefaultTermsService */
+        $appTranslationDefaultTermsService = AppTranslationDefaultTerms::getService();
+        return $appTranslationDefaultTermsService->findDefaultTermsForLanguageId($languageId)
+            ?? new AppTranslationDefaultTerms();
     }
 
     /**
@@ -286,12 +284,7 @@ class AppTranslationsService extends Service
         $aiPromptsService = DDDService::instance()->getService(AIPromptsService::class);
         $translationsAIPrompt = $aiPromptsService->getAIPromptByName($aiPromptName);
         $translationsAIPrompt->setParameter('default_locale', $locale->languageCode . '-' . $locale->countryShortCode);
-        $translationsAIPrompt->setParameter(
-            'glossary',
-            $this->findDefaultTermsForLanguageId(
-                $locale->languageId
-            )->getDefaultTermsAsAssociationPairs()
-        );
+        $translationsAIPrompt->setParameter('glossary', $defaultTerms->getDefaultTermsAsAssociationPairs());
         $promptTokensRequired = $translationsAIPrompt->getEstimatedInputTokens();
         $translationAIModel = $aiModelsService->getAIModelByName(Translations::AI_MODEL_FOR_TRANSLATIONS);
 

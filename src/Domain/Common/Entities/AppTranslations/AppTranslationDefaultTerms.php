@@ -25,10 +25,36 @@ class AppTranslationDefaultTerms extends EntitySet
     public const string SERVICE_NAME = AppTranslationDefaultTermsService::class;
 
     /**
+     * Links each variant term to its default term (defaultTermId) when that default term is part of this set.
+     * A variant that is already linked, or whose default term is not in the set, is left as it is.
+     *
+     * @return static
+     */
+    public function linkVariantTermsToDefaultTerms(): static
+    {
+        $termsById = [];
+        foreach ($this->getElements() as $term) {
+            if (isset($term->id)) {
+                $termsById[$term->id] = $term;
+            }
+        }
+        foreach ($this->getElements() as $term) {
+            if (isset($term->defaultTerm) || !isset($term->defaultTermId) || $term->defaultTermId === ($term->id ?? null)) {
+                continue;
+            }
+            if ($defaultTerm = $termsById[$term->defaultTermId] ?? null) {
+                $term->defaultTerm = $defaultTerm;
+            }
+        }
+        return $this;
+    }
+
+    /**
      * @return string Returns default terms as pairs of <term>;<defaultTerm>
      */
     public function getDefaultTermsAsStringPairs(): string
     {
+        $this->linkVariantTermsToDefaultTerms();
         $defaultTermsStringPairs = '';
         foreach ($this->getElements() as $defaultTerm) {
             if ($defaultTerm->defaultTerm ?? null) {
@@ -43,6 +69,7 @@ class AppTranslationDefaultTerms extends EntitySet
      */
     public function getDefaultTermsAsAssociationPairs(): string
     {
+        $this->linkVariantTermsToDefaultTerms();
         $defaultTerms = [];
         foreach ($this->getElements() as $defaultTerm) {
             if ($defaultTerm->defaultTerm ?? null) {
