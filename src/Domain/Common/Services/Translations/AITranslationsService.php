@@ -12,6 +12,7 @@ use DDD\Domain\Common\Entities\Texts\Buckets\TextsBuckets;
 use DDD\Domain\Common\Entities\Texts\Text;
 use DDD\Domain\Common\Entities\Texts\Texts;
 use DDD\Domain\Common\Entities\Texts\TranslationPrompts;
+use DDD\Domain\Common\Entities\Texts\Translations\Translations;
 use DDD\Domain\Common\Repo\Argus\Texts\Buckets\ArgusTextsBuckets;
 use DDD\Domain\Common\Repo\Argus\Texts\Translations\ArgusTranslations;
 use DDD\Infrastructure\Libs\Config;
@@ -537,6 +538,7 @@ class AITranslationsService
             ->setParameter('targetLocale', $localeString)
             ->setParameter('default_locale', $localeString);
         $textsForLocale->getTranslations()->translationsAIPrompt = $translationsAIPrompt;
+        $textsForLocale->getTranslations()->translationPurpose = Translations::TRANSLATION_PURPOSE_ENTITY_TRANSLATIONS;
 
         return $textsForLocale;
     }

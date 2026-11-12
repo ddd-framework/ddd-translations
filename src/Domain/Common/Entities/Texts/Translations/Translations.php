@@ -25,14 +25,29 @@ use DDD\Domain\Base\Entities\LazyLoad\LazyLoadRepo;
 #[LazyLoadRepo(LazyLoadRepo::ARGUS, ArgusTranslations::class)]
 class Translations extends Texts
 {
-    /** @var string Default model used for Translations */
-    public const string AI_MODEL_FOR_TRANSLATIONS = AIModel::MODEL_OPENAI_GPT5_4_MINI;
+    /** @var string Default model of app UI translations (no fast mode) */
+    public const string AI_MODEL_FOR_TRANSLATIONS = AIModel::MODEL_OPENAI_GPT6_1_SOL;
+
+    /** @var string Default model of entity translations (fast mode where the model supports it) */
+    public const string AI_MODEL_FOR_ENTITY_TRANSLATIONS = AIModel::MODEL_OPENAI_GPT6_LUNA;
 
     /** @var Locales The locales to be translated at once in a batch */
     public Locales $localesToTranslateAtOnce;
 
+    /** App UI translations (AppTranslationsService) */
+    public const string TRANSLATION_PURPOSE_APP_TRANSLATIONS = 'appTranslations';
+
+    /** Translations of entity content (AITranslationsService: Translatable properties, messages) */
+    public const string TRANSLATION_PURPOSE_ENTITY_TRANSLATIONS = 'entityTranslations';
+
     /** @var AIPrompt The AI Promt to use for translations */
     public AIPrompt $translationsAIPrompt;
+
+    /**
+     * @var string|null What these translations are for (a TRANSLATION_PURPOSE_* constant): picks the model and fast
+     *      mode the application configured for it. Null = the model the repository declares.
+     */
+    public ?string $translationPurpose = null;
 
     protected array $translationsByLocale = [];
 

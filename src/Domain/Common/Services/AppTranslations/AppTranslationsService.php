@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace DDD\Domain\Common\Services\AppTranslations;
 
 use DDD\Domain\AI\Entities\Prompts\AIPrompt;
-use DDD\Domain\AI\Services\AIModelsService;
 use DDD\Domain\Common\Entities\Texts\TranslationPrompts;
 use DDD\Domain\AI\Services\AIPromptsService;
 use DDD\Domain\Base\Repo\Argus\Attributes\ArgusLoad;
@@ -27,6 +26,7 @@ use DDD\Domain\Common\Repo\Argus\Texts\ArgusTexts;
 use DDD\Domain\Common\Repo\Argus\Texts\Translations\ArgusTranslations;
 use DDD\Domain\Common\Services\Languages\LanguagesService;
 use DDD\Domain\Common\Services\Languages\LocalesService;
+use DDD\Domain\Common\Services\Translations\TranslationAIModelsService;
 use DDD\Infrastructure\Exceptions\BadRequestException;
 use DDD\Infrastructure\Exceptions\InternalErrorException;
 use DDD\Infrastructure\Exceptions\NotFoundException;
@@ -276,7 +276,6 @@ class AppTranslationsService extends Service
         bool $previewOnly = false,
         bool $returnTexts = false
     ): AppTranslationsResult {
-        $aiModelsService = new AIModelsService();
         $defaultTerms = $this->findDefaultTermsForLanguageId($locale->languageId);
 
         $aiPromptName = $writingStyle == Text::WRITING_STYLE_INFORMAL ? TranslationPrompts::APP_TRANSLATIONS_SINGLE_LOCALE_INFORMAL : TranslationPrompts::APP_TRANSLATIONS_SINGLE_LOCALE_FORMAL;
@@ -286,7 +285,10 @@ class AppTranslationsService extends Service
         $translationsAIPrompt->setParameter('default_locale', $locale->languageCode . '-' . $locale->countryShortCode);
         $translationsAIPrompt->setParameter('glossary', $defaultTerms->getDefaultTermsAsAssociationPairs());
         $promptTokensRequired = $translationsAIPrompt->getEstimatedInputTokens();
-        $translationAIModel = $aiModelsService->getAIModelByName(Translations::AI_MODEL_FOR_TRANSLATIONS);
+        /** @var TranslationAIModelsService $translationAIModelsService */
+        $translationAIModelsService = DDDService::instance()->getService(TranslationAIModelsService::class);
+        // the configured app-translation model sizes the buckets (its output limit) and prices the estimate
+        $translationAIModel = $translationAIModelsService->getAIModelForPurpose(Translations::TRANSLATION_PURPOSE_APP_TRANSLATIONS);
 
         $currentUserContentTokensRequired = 0;
         $currentEstimatedOutputTokensRequired = 0;
@@ -464,6 +466,7 @@ class AppTranslationsService extends Service
         $texts->defaultWritingStyle = $writingStyle;
         $texts->addLocaleToTranslateAtOnce(locale: $locale);
         $texts->getTranslations()->translationsAIPrompt = $translationsAIPrompt;
+        $texts->getTranslations()->translationPurpose = Translations::TRANSLATION_PURPOSE_APP_TRANSLATIONS;
         return $texts;
     }
 

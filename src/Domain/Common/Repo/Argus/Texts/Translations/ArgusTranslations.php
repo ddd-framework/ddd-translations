@@ -16,6 +16,13 @@ use DDD\Domain\Common\Entities\Texts\Text;
 use DDD\Domain\Common\Entities\Texts\Texts;
 use DDD\Domain\Common\Entities\Texts\Translations\Translation;
 use DDD\Domain\Common\Entities\Texts\Translations\Translations;
+use DDD\Domain\Common\Services\Translations\TranslationAIModelsService;
+use DDD\Infrastructure\Exceptions\BadRequestException;
+use DDD\Infrastructure\Exceptions\InternalErrorException;
+use DDD\Infrastructure\Exceptions\NotFoundException;
+use DDD\Infrastructure\Services\DDDService;
+use Psr\Cache\InvalidArgumentException;
+use ReflectionException;
 
 /**
  * translates text with OpenAI API
@@ -28,13 +35,55 @@ use DDD\Domain\Common\Entities\Texts\Translations\Translations;
  */
 #[ArgusLoad(loadEndpoint: 'POST:/ai/openRouter/chatCompletions', cacheLevel: ArgusCache::CACHELEVEL_MEMORY_AND_DB, cacheTtl: ArgusCache::CACHELEVEL_NONE)]
 #[ArgusLanguageModel(
-    defaultAIModelName: AIModel::MODEL_OPENAI_GPT5_4_MINI,
+    defaultAIModelName: AIModel::MODEL_OPENAI_GPT6_LUNA,
     defaultAIPromptName: TranslationPrompts::APP_TRANSLATIONS_SINGLE_LOCALE_FORMAL,
     responseFormat: ArgusLanguageModel::RESPONSE_FORMAT_JSON_OBJECT,
+    fastMode: true,
 )]
 class ArgusTranslations extends Translations
 {
-    use ArgusTrait, ArgusAILanguageModelTrait;
+    use ArgusTrait, ArgusAILanguageModelTrait {
+        getAIModel as protected getAIModelDeclaredByRepository;
+        resolveServiceTierForRequest as protected resolveServiceTierDeclaredByRepository;
+    }
+
+    /**
+     * The model the application configured for the translation purpose; without a purpose the declared default.
+     *
+     * @return AIModel|null
+     * @throws InternalErrorException when the configured model is not in the catalog
+     * @throws BadRequestException
+     * @throws InvalidArgumentException
+     * @throws NotFoundException
+     * @throws ReflectionException
+     */
+    public function getAIModel(): ?AIModel
+    {
+        if (!isset($this->aiModel) && isset($this->translationPurpose)) {
+            $this->aiModel = $this->getTranslationAIModelsService()->getAIModelForPurpose($this->translationPurpose);
+        }
+        return $this->getAIModelDeclaredByRepository();
+    }
+
+    /**
+     * The fast tier when the application asked for it for the translation purpose and the model supports it;
+     * without a purpose the repository's declaration.
+     */
+    protected function resolveServiceTierForRequest(AIModel $aiModel): ?string
+    {
+        if (!isset($this->translationPurpose)) {
+            return $this->resolveServiceTierDeclaredByRepository($aiModel);
+        }
+        $aiModelSelection = $this->getTranslationAIModelsService()->getAIModelSelectionForPurpose($this->translationPurpose);
+        return $aiModelSelection->fastMode && $aiModel->supportsFastMode ? self::SERVICE_TIER_PRIORITY : null;
+    }
+
+    protected function getTranslationAIModelsService(): TranslationAIModelsService
+    {
+        /** @var TranslationAIModelsService $translationAIModelsService */
+        $translationAIModelsService = DDDService::instance()->getService(TranslationAIModelsService::class);
+        return $translationAIModelsService;
+    }
 
     public function getAIPrompt(): ?AIPrompt
     {

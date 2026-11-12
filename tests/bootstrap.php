@@ -9,6 +9,7 @@ declare(strict_types=1);
  */
 
 use DDD\Domain\Base\Entities\LazyLoad\LazyLoadRepo;
+use DDD\Infrastructure\Libs\Config;
 use DDD\Tests\Translations\Support\TestContainer;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 
@@ -29,3 +30,5 @@ $testContainer = new TestContainer(new ParameterBag([
 (new ReflectionProperty(DDD\DDDBundle::class, 'defaultContainer'))->setValue(null, $testContainer);
 // a lazy-load attribute without a repo type falls back to the application's default (an env value in an app)
 (new ReflectionProperty(LazyLoadRepo::class, 'defaultRepoType'))->setValue(null, LazyLoadRepo::DB);
+// the AI model catalog (AI.models) is read from ddd-ai's config directory, as in an application
+Config::addConfigDirectory(dirname(__DIR__) . '/vendor/mgamadeus/ddd-ai/config/app', isModule: true);

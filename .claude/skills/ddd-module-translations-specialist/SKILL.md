@@ -1,9 +1,9 @@
 ---
 name: ddd-module-translations-specialist
-description: Work with entity translations, app UI translations, text embeddings, and language detection from the ddd-common-translations module. Use when translating entity properties, managing app translation keys, generating translations via AI, or working with text embeddings.
+description: "Work with entity translations, app UI translations, text embeddings, and language detection from the ddd-common-translations module. Covers the model per translation purpose (app UI vs entity translations, Common.TranslationModels config, fast mode) and the glossary of default terms. Use when translating entity properties, managing app translation keys, generating translations via AI, choosing the translation model, or working with text embeddings."
 metadata:
   author: mgamadeus
-  version: "1.0.1"
+  version: "1.1.0"
   module: mgamadeus/ddd-common-translations
 ---
 
@@ -184,6 +184,31 @@ DDD\Domain\Base\Services\TranslatableService:
 Then `__('Welcome')` reads from `AppTranslationKey`/`AppTranslationValue` with APC caching (1h).
 
 **Fallback chain:** exact match -> no country -> alt writing style -> default language -> first available -> key itself.
+
+## Models per Translation Purpose
+
+Each purpose runs on its own model; an application overrides model and fast mode in
+`config/app/Common/TranslationModels.php` (`TranslationAIModelsService`, config path `Common.TranslationModels`):
+
+| Purpose (`Translations::TRANSLATION_PURPOSE_*`) | Used by | Default |
+|---|---|---|
+| `appTranslations` | `AppTranslationsService` (SingleLocale prompts; also sizes the buckets by the model's output limit) | GPT-6.1 Sol, no fast mode |
+| `entityTranslations` | `AITranslationsService` (Translatable properties, messages; ENTITY_TRANSLATABLE prompt) | GPT-6 Luna, fast mode |
+
+```php
+// config/app/Common/TranslationModels.php — every key optional; a missing one keeps the default
+return [
+    'appTranslations' => ['model' => AIModel::MODEL_OPENAI_GPT6_1_SOL, 'fastMode' => false],
+    'entityTranslations' => ['model' => AIModel::MODEL_OPENAI_GPT6_LUNA, 'fastMode' => true],
+];
+```
+
+- The services set `Translations::$translationPurpose`; `ArgusTranslations` resolves model and tier from it. Without a
+  purpose the repository's declaration applies (GPT-6 Luna, fast mode).
+- Fast mode sends the priority tier only when the model supports it (`AIModel::$supportsFastMode`); otherwise no tier.
+- A configured model missing from the catalog throws an `InternalErrorException`.
+- Language detection (`ArgusDetectedLanguage`) runs on GPT-6 Luna in fast mode.
+- Not `Common.Translations`: that file holds the translation keys `importFromTranslationsConfig()` imports.
 
 ## Text Embeddings
 
