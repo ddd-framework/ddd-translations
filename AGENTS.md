@@ -8,6 +8,15 @@ Texts, entity translations, app UI translations, embeddings, and language detect
 
 > **This module follows all DDD Core conventions.** For base patterns, see `vendor/mgamadeus/ddd/AGENTS.md` and skills in `vendor/mgamadeus/ddd`. For AI patterns, see `vendor/mgamadeus/ddd-ai`. For Argus patterns, see `vendor/mgamadeus/ddd-argus`.
 
+## Untrusted Input (mandatory)
+
+No byte or string from outside (uploads, URLs and their responses, third-party API bodies, model output, a client's
+claims about a file) is ever executed or interpreted as code. Use the helpers of `DDD\Infrastructure\Untrusted` in
+`mgamadeus/ddd` (`RasterImageDecoder`, `GuardedHttpFetchService`, `SafeXml`, `ContainedPath`, `IsolatedProcess`,
+`ArchiveInspector`, `UntrustedContentResponseDto`). Any other raw sink call needs an entry with its reason in
+`config/untrusted-sinks-allowlist.php`; `tests/UntrustedSinkScanTest.php` enforces it. Rule, helpers and traps: Core
+skill `ddd-untrusted-input-specialist`.
+
 ## Architecture
 
 ```
