@@ -32,3 +32,5 @@ $testContainer = new TestContainer(new ParameterBag([
 (new ReflectionProperty(LazyLoadRepo::class, 'defaultRepoType'))->setValue(null, LazyLoadRepo::DB);
 // the AI model catalog (AI.models) is read from ddd-ai's config directory, as in an application
 Config::addConfigDirectory(dirname(__DIR__) . '/vendor/mgamadeus/ddd-ai/config/app', isModule: true);
+// the module's own config (skills, areas of the UI texts), as an application sees it
+Config::addConfigDirectory(dirname(__DIR__) . '/config/app', isModule: true);

@@ -163,6 +163,57 @@ return [
 
 The module does not ship this file — create it in your project as needed.
 
+## Agent tools for the UI texts (beside ddd-agents)
+
+With `mgamadeus/ddd-agents` 0.3 or later installed (it is a `suggest`, not a requirement), the module ships the agent
+skill `Translations.AppTexts` (`config/app/AI/Skills/Translations/AppTexts.md`) and its tool package
+`translations.appTexts` (`DDD\Presentation\Mcp\Admin\Translations\TranslationsAppTextsMCPPackage`): find UI text
+keys by wording, area or missing language, read a key in every language, completeness per area and language, active
+locales, the glossary, create a server text key, set the text of a key in one language. Without ddd-agents the
+package's classes are neither services nor loaded (`TranslationsModule::getNamespacesRequiringClasses()`).
+
+The tools are for platform operators: the package requires the account right `manageTexts`
+(`AgentAccountRights::MANAGE_TEXTS`; ddd-agents' default mapping `AI.accountRights` gives it to the superadmins) and an
+account with access to every resource. A host binds the skill by class in its `config/app/AI/skillPackages.php`:
+
+```php
+use DDD\Presentation\Mcp\Admin\Translations\TranslationsAppTextsMCPPackage;
+
+return [
+    // …
+    'Translations.AppTexts' => [TranslationsAppTextsMCPPackage::class],
+];
+```
+
+**Areas.** No column stores where a key is shown; the start of the key string does. The areas are configured in
+`config/app/Common/Translations/AppTexts.php` (key `areas`, by name; the module ships one area `SERVER` that holds
+every key). A host with an app or a web of its own replaces the file:
+
+```php
+return [
+    'areas' => [
+        'APP' => ['label' => 'the mobile app', 'keyPrefix' => 'mobile.', 'isSyncedFromCode' => true,
+                  'writingStyles' => ['INFORMAL'], 'liveNote' => 'The app shows the new text after it loads its texts again.'],
+        'WEB' => ['label' => 'the admin web', 'keyPrefix' => 'web.', 'isSyncedFromCode' => true,
+                  'liveNote' => 'The web shows the new text after a reload.'],
+        'SERVER' => ['label' => 'mails, push and error texts', 'liveNote' => 'Server texts are cached: the new text is used within an hour.'],
+    ],
+];
+```
+
+A key belongs to the area with the longest prefix it starts with; the area without `keyPrefix` holds the rest. Keys of
+an area with `isSyncedFromCode` are not created by the tools, and their English text is not set there.
+`writingStyles` limits the address forms an area keeps (else those the language is written in).
+
+**Placeholders.** A new text keeps the `%name%` and `{name}` placeholders of its reference text (the translator
+template, else the English text of a key synced from the code, else the key string).
+`AppTranslationsMaintenanceService::findPlaceholderProblem()` checks it; a host whose texts carry other syntax (ICU
+plural blocks, markup) overrides that method in a same-path subclass.
+
+The reads and writes behind the tools are `AppTranslationsMaintenanceService` (container service, usable without
+ddd-agents): `findKeyCoverages()`, `countKeys()`, `findStoredTextsOfKeys()`, `getCompleteness()`, `findStoredText()`,
+`setValue()`, `createKey()`, `findReferenceText()`.
+
 ## Argus endpoints
 
 | Argus repo | Endpoint | Cache | Purpose |

@@ -8,7 +8,7 @@
         "issues": "https://github.com/ddd-framework/ddd-translations/issues",
         "source": "https://github.com/ddd-framework/ddd-translations"
     },
-    "version": "1.1.2",
+    "version": "1.2.0",
     "authors": [
         {
             "name": "Marius-Eugen Gerdan",
@@ -23,7 +23,11 @@
         "mgamadeus/ddd-common-political": "^1.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5"
+        "phpunit/phpunit": "^9.5",
+        "mgamadeus/ddd-agents": "^0.3.0"
+    },
+    "suggest": {
+        "mgamadeus/ddd-agents": "^0.3.0 for the agent skill Translations.AppTexts and its tools (package translations.appTexts)"
     },
     "autoload": {
         "psr-4": {

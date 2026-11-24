@@ -1,9 +1,9 @@
 ---
 name: ddd-module-translations-specialist
-description: "Work with entity translations, app UI translations, text embeddings, and language detection from the ddd-common-translations module. Covers the model per translation purpose (app UI vs entity translations, Common.TranslationModels config, fast mode) and the glossary of default terms. Use when translating entity properties, managing app translation keys, generating translations via AI, choosing the translation model, or working with text embeddings."
+description: "Work with entity translations, app UI translations, text embeddings, and language detection from the ddd-common-translations module. Covers the model per translation purpose (app UI vs entity translations, Common.TranslationModels config, fast mode), the glossary of default terms, the UI text maintenance service (areas by key prefix in Common.Translations.AppTexts, completeness, placeholder check) and the agent skill Translations.AppTexts with its package translations.appTexts (beside ddd-agents, right manageTexts). Use when translating entity properties, managing app translation keys, configuring UI text areas, binding the UI text agent tools, generating translations via AI, choosing the translation model, or working with text embeddings."
 metadata:
   author: mgamadeus
-  version: "1.1.1"
+  version: "1.2.0"
   module: mgamadeus/ddd-common-translations
 ---
 
@@ -291,3 +291,26 @@ prompts, built by `getDefaultTermsAsAssociationPairs()` as `<variant>, <variant>
 - A variant row points to its default term through `defaultTermId`; `defaultTerm` is no lazy load. The finders, and
   both pair methods, link each variant to its default term from the same set (`linkVariantTermsToDefaultTerms()`).
   A variant whose default term is not in the set gives no glossary line.
+
+## UI text maintenance and the agent tools (`Translations.AppTexts`)
+
+`AppTranslationsMaintenanceService` (`Services\AppTranslations\`, container service) reads and writes UI text keys as
+a person maintains them: `findKeyCoverages()` / `countKeys()` with `AppTranslationKeyListCriteria` (search text,
+area, missing language), `findStoredTextsOfKeys()` (projections, `AppTranslationStoredTexts`), `getCompleteness()`
+(`AppTranslationAreaCompletenesses` per area, language, writing style), `findStoredText()`, `setValue()`,
+`createKey()`, `findReferenceText()`, `findPlaceholderProblem()`.
+
+- **Areas** come from the config `Common.Translations.AppTexts` (`areas` by name: `label`, `keyPrefix`,
+  `isSyncedFromCode`, `writingStyles`, `liveNote`). No column stores the area; the longest matching key prefix
+  decides, the area without a prefix holds the rest. The module ships one area `SERVER`; a host with an app or a web
+  replaces the file.
+- **Placeholders** `%name%` and `{name}` of the reference text must stay; a host with ICU plurals or markup overrides
+  `findPlaceholderProblem()` in a same-path subclass.
+- **Agent part** (only beside `mgamadeus/ddd-agents` ≥ 0.3, `getNamespacesRequiringClasses()`): skill file
+  `config/app/AI/Skills/Translations/AppTexts.md`, package `TranslationsAppTextsMCPPackage` (id
+  `translations.appTexts`, seven tools: `findAppTranslationKeys`, `getAppTranslationKey`,
+  `getAppTranslationCompleteness`, `listActiveLocales`, `listTranslationDefaultTerms`, `createAppTranslationKey`,
+  `setAppTranslationValue`). Gated by `#[MCPRequiresAccountRights(AgentAccountRights::MANAGE_TEXTS)]` and
+  `#[MCPRequiresAdminWithAccessToAllResources]`; the skill names `requiredAccountRights: ['manageTexts']`. The host
+  binds it by class: `'Translations.AppTexts' => [TranslationsAppTextsMCPPackage::class]`.
+- The texts of records (`Translations.RecordTexts`) are not part of the module yet.

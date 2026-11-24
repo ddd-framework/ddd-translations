@@ -2,9 +2,9 @@
 
 Texts, entity translations, app UI translations, embeddings, and language detection for the `mgamadeus/ddd` framework.
 
-**Package:** `mgamadeus/ddd-common-translations` (v1.0.x)
+**Package:** `mgamadeus/ddd-common-translations` (v1.2.x)
 **Namespace:** `DDD\`
-**Depends on:** `mgamadeus/ddd` (^2.24), `mgamadeus/ddd-ai` (^3.3), `mgamadeus/ddd-common-money` (^1.0), `mgamadeus/ddd-common-political` (^1.0)
+**Depends on:** `mgamadeus/ddd` (^3.40), `mgamadeus/ddd-ai` (^3.3), `mgamadeus/ddd-common-money` (^1.0), `mgamadeus/ddd-common-political` (^1.0)
 
 > **This module follows all DDD Core conventions.** For base patterns, see `vendor/mgamadeus/ddd/AGENTS.md` and skills in `vendor/mgamadeus/ddd`. For AI patterns, see `vendor/mgamadeus/ddd-ai`. For Argus patterns, see `vendor/mgamadeus/ddd-argus`.
 
@@ -32,16 +32,29 @@ src/Domain/Common/
 |       +-- AppTranslationValue.php    [Per-language/country/style values]
 |       +-- AppTranslationDefaultTerm.php [Glossary terms]
 |       +-- Completeness/             [Per-locale coverage metrics]
+|       +-- Maintenance/              [Areas by key prefix, key coverages, area completeness, stored texts]
 +-- Repo/
 |   +-- Argus/Texts/                   [ArgusTranslation, ArgusTranslations, ArgusTextEmbedding, ArgusDetectedLanguage]
 |   +-- DB/AppTranslations/            [Doctrine repos for AppTranslation* entities]
 +-- Services/
-|   +-- AppTranslations/               [AppTranslationsService, AppTranslatableService, AppTranslationKeysService, AppTranslationValuesService]
+|   +-- AppTranslations/               [AppTranslationsService, AppTranslatableService, AppTranslationKeysService, AppTranslationValuesService, AppTranslationsMaintenanceService]
 |   +-- Translations/AITranslationsService.php [Entity property translation]
 |   +-- Texts/Embeddings/AITextEmbeddingsService.php
 +-- MessageHandlers/                   [AppTranslationsHandler + AppTranslationsMessage]
+src/Presentation/Mcp/Admin/Translations/ [beside ddd-agents >= 0.3 only: TranslationsAppTextsMCPPackage + Dtos]
 config/app/AI/Prompts/Common/         [4 prompt templates]
+config/app/AI/Skills/Translations/    [agent skill Translations.AppTexts]
+config/app/Common/Translations/       [AppTexts.php: the areas of the UI text keys]
 ```
+
+## Agent part (optional, beside `mgamadeus/ddd-agents`)
+
+`Translations.AppTexts` ↔ package id `translations.appTexts` (`TranslationsAppTextsMCPPackage`), bound by class in the
+host's `skillPackages.php`. Gated by the right `manageTexts` (`AgentAccountRights::MANAGE_TEXTS`) on package and skill,
+plus `MCPRequiresAdminWithAccessToAllResources`. `TranslationsModule::getNamespacesRequiringClasses()` keeps the
+`Presentation\Mcp\Admin\Translations\` classes unloaded without ddd-agents; ddd-agents is a `suggest` and a dev
+dependency only. The areas (`Common.Translations.AppTexts`) and the placeholder check
+(`AppTranslationsMaintenanceService::findPlaceholderProblem()`, same-path override) are the host's hooks.
 
 ## Two Translation Systems
 
