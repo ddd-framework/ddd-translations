@@ -1,0 +1,17 @@
+{
+    "generatedBy": "ddd-server-messages build — keys generated from src/, hints written by hand and kept",
+    "format": 1,
+    "package": "mgamadeus/ddd-common-translations",
+    "scanDirectories": [],
+    "excludedFiles": [],
+    "keys": [
+        {
+            "key": "An empty text is not stored.",
+            "text": "An empty text is not stored.",
+            "hint": "Error message from the server in the admin app-texts editor (and the admin AI assistant) when someone tries to save an empty value for a UI text key; the value must not be blank.",
+            "origins": [
+                "AppTranslationsMaintenanceService::setValue"
+            ]
+        }
+    ]
+}

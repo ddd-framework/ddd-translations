@@ -214,6 +214,14 @@ The reads and writes behind the tools are `AppTranslationsMaintenanceService` (c
 ddd-agents): `findKeyCoverages()`, `countKeys()`, `findStoredTextsOfKeys()`, `getCompleteness()`, `findStoredText()`,
 `setValue()`, `createKey()`, `findReferenceText()`.
 
+## Server messages (text export)
+
+`i18n/server-messages.json` lists the messages this package's endpoints answer with (user-facing exceptions, message
+constants, refusal reasons), each with a hint for translators. A host merges it into its text export with
+`vendor/bin/ddd-server-messages collect` (mgamadeus/ddd >= 3.42) and never prunes a key a package lists. After changing
+a message: `php vendor/bin/ddd-server-messages build`, write the hint of a new key (at least 40 characters); CI runs
+`build --check`.
+
 ## Argus endpoints
 
 | Argus repo | Endpoint | Cache | Purpose |

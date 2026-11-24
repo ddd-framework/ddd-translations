@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: imagick, intl
+          coverage: none
+          # Composer 2.9 refuses firebase/php-jwt 6.x (an advisory) which mgamadeus/ddd still requires
+          tools: composer:2.8
+      - run: composer install --no-interaction --no-progress --no-scripts
+      - name: Lint
+        run: find src config tests -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+      - name: Unit tests
+        run: vendor/bin/phpunit
+      - name: Server messages manifest (i18n/server-messages.json) is current and every key has a hint
+        run: php vendor/bin/ddd-server-messages build --check

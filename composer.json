@@ -8,7 +8,7 @@
         "issues": "https://github.com/ddd-framework/ddd-translations/issues",
         "source": "https://github.com/ddd-framework/ddd-translations"
     },
-    "version": "1.2.0",
+    "version": "1.2.1",
     "authors": [
         {
             "name": "Marius-Eugen Gerdan",
@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "mgamadeus/ddd": "^3.40.0",
+        "mgamadeus/ddd": "^3.42.0",
         "mgamadeus/ddd-ai": "^3.3.0",
         "mgamadeus/ddd-argus": "^1.7.0",
         "mgamadeus/ddd-common-money": "^1.1.1",
